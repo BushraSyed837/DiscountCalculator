@@ -10,14 +10,16 @@ class History extends React.Component {
     super(props);
     this.state={  
       list:[] ,  
-     check:true
+     check:true,
+     removed:[]
     }
     {this.setState({list:(this.state.list=this.props.route.params)})}
   }
    removeListItems=(ikey)=>{
   const features=this.state.list.slice(0, ikey).concat(this.state.list.slice(ikey + 1,     this.state.list.length));
     this.setState({list:(this.state.list=features)})
-    this.props.route.params=this.state.list
+    this.setState({removed:(this.state.removed=this.state.list)})
+    this.props.route.params=this.state.removed
 }
 scrollView=()=>{
     this.props.navigation.setOptions({
@@ -28,20 +30,22 @@ scrollView=()=>{
             size={21}
             color="red"
             onPress={() =>{
-              this.setState({list:(this.state.list=[])})
+              Alert.alert("Delete?", "Are You Sure?",
+              [{text: "Yes", onPress:()=>{this.setState({list:this.state.list=[]})
+              this.props.route.params=this.state.list}, style: "cancel"},
+              { text: "No", onPress: () => console.log("No Pressed") }]);
               }}/>
             
         </View>
       ),
     });
     return(
-      <ScrollView>
-      
+      <ScrollView>      
               <View style={styles.adjustModal}>
               <Text style={{alignSelf:"center", color:"white",fontSize:14, fontFamily:"Times New Roman"}}>Original Price  -  Discount  =  Final Price</Text>
               </View>
             <View>
-            {this.state.list.map((item, key) =>{return <TouchableOpacity style={styles.adjustModal} key={key}  onPress={() => {this.updateListItems(key)}}>{item}
+             {this.state.list.map((item, key) =>{return <TouchableOpacity style={styles.adjustModal} key={key}  onPress={() => {this.updateListItems(key)}}><Text>{item}</Text>
             <TouchableOpacity
             style={styles.button}    
             onPress={() => {this.removeListItems(key)}}
@@ -72,7 +76,8 @@ scrollView=()=>{
           size={25}
           color="red"
           onPress={() => {
-            this.props.navigation.navigate('Discount Calculator',{list:this.state.list})
+            console.log(this.state.list)
+            this.props.navigation.navigate('Discount Calculator',{list:this.state.list,removed:this.state.removed})
           }}
           />
         </View>
@@ -98,12 +103,12 @@ class MainScreen extends React.Component {
       price: 0,
       list : [],
       disable:true,
-      recheck:false,
+      recheck:[],
     };
   }
   updateList = (item) => {
+    
     if(this.props.route.params!=undefined||this.props.route.params==[]){
-      {this.setState({list:(this.state.list=this.props.route.params.list)})}
       this.setState({list:(this.state.list.concat(""+this.state.price+"..........-.......... "+(this.state.discount)+"%........=........... "+this.state.finalPrice))})
     this.setState({text:this.state.text=""})
     this.setState({textinp:this.state.textinp=""})
@@ -122,6 +127,11 @@ class MainScreen extends React.Component {
     const saved = (dis*this.state.price).toFixed(2)
     this.setState({ save: this.state.save = saved  })
   }
+  removeListItems=(ikey)=>{
+  const features=this.state.list.slice(0, ikey).concat(this.state.list.slice(ikey + 1,     this.state.list.length));
+    this.setState({list:(this.state.list=features)})
+    this.props.route.params=this.state.list
+}
   render() {
     this.props.navigation.setOptions({
       headerRight: () => (
@@ -131,7 +141,17 @@ class MainScreen extends React.Component {
             size={23}
             color="red"
             onPress={() =>{
-            this.props.navigation.navigate('History',this.state.list)}}/>
+              
+              if(this.props.route.params!=undefined){
+                 let difference = this.state.list.filter(x =>!this.props.route.params.removed.includes(x));
+                 {this.setState({recheck:(this.state.recheck=difference)})}
+                 console.log(this.state.recheck)
+                 let add = this.state.list.filter(x => this.state.recheck.includes(x));
+                 {this.setState({list:(this.state.list=add)})}
+              }
+              
+              this.props.navigation.navigate('History',this.state.list)
+     }}/>
             
         </View>
       ),
@@ -309,9 +329,3 @@ const styles = StyleSheet.create({
     borderColor:"grey,"
   },
 });
-
-
-            // <Icon name="history" size="100" color="red" 
-            // onPress={() => {console.log("ji"),this.props.navigation.navigate('History')}}>
-            // </Icon>
-
